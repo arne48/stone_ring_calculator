@@ -1,0 +1,2250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="StoneRing is a responsive single-file circular paving calculator for wedge and shim stone rings.">
+  <title>StoneRing – Circular Paving Calculator</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef3f8;
+      --bg-accent: #dce8f5;
+      --surface: rgba(255, 255, 255, 0.92);
+      --surface-solid: #ffffff;
+      --surface-muted: #f6f8fb;
+      --text: #162235;
+      --muted: #66758a;
+      --line: #dfe6ef;
+      --primary: #5267e8;
+      --primary-strong: #4054d7;
+      --primary-soft: #eef0ff;
+      --success: #18795d;
+      --success-soft: #e7f6f0;
+      --warning: #9a6013;
+      --warning-soft: #fff3dc;
+      --danger: #b53e55;
+      --danger-soft: #fff0f3;
+      --stone-a: #a8655c;
+      --stone-b: #a8655c;
+      --stone-c: #a8655c;
+      --stone-stroke: #6f3f39;
+      --shim-stone: #d3cbb5;
+      --shim-stroke: #817760;
+      --plot-bg: #f9fbfe;
+      --shadow: 0 20px 60px rgba(31, 48, 79, 0.12);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-width: 300px;
+      background: var(--bg);
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 0%, rgba(127, 153, 174, 0.26), transparent 34rem),
+        radial-gradient(circle at 100% 18%, rgba(183, 190, 196, 0.32), transparent 30rem),
+        linear-gradient(145deg, #d4dee7, #eef1f3 45%, #f5f6f6);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app-shell {
+      width: min(1440px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 36px 0 44px;
+    }
+
+    .hero {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 22px;
+      padding: 0 4px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 7px 11px;
+      border: 1px solid rgba(82, 103, 232, 0.16);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.7);
+      color: var(--primary-strong);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      backdrop-filter: blur(12px);
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 5px rgba(82, 103, 232, 0.12);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.45rem);
+      line-height: 1.02;
+      letter-spacing: -0.055em;
+    }
+
+    .hero p {
+      max-width: 760px;
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: clamp(0.98rem, 1.5vw, 1.12rem);
+      line-height: 1.62;
+    }
+
+    .hero-mark {
+      position: relative;
+      flex: 0 0 auto;
+      width: 92px;
+      aspect-ratio: 1;
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.58);
+      box-shadow: 0 18px 48px rgba(39, 57, 95, 0.12);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero-mark::before,
+    .hero-mark::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+    }
+
+    .hero-mark::before {
+      inset: 17px;
+      border: 13px solid var(--stone-a);
+      border-top-color: var(--primary);
+      transform: rotate(15deg);
+    }
+
+    .hero-mark::after {
+      inset: 37px;
+      background: var(--surface-solid);
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(310px, 410px) minmax(0, 1fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid rgba(255, 255, 255, 0.78);
+      border-radius: var(--radius-xl);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .controls-panel {
+      position: sticky;
+      top: 18px;
+      padding: 24px;
+    }
+
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .panel-heading h2,
+    .visual-title h2 {
+      margin: 0;
+      font-size: 1.12rem;
+      letter-spacing: -0.025em;
+    }
+
+    .step-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 54px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary-strong);
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .input-stack {
+      display: grid;
+      gap: 15px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field-label-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    label {
+      font-size: 0.88rem;
+      font-weight: 760;
+    }
+
+    .unit {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 49px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      outline: none;
+      background: var(--surface-solid);
+      color: var(--text);
+      transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    }
+
+    input {
+      padding: 0 54px 0 14px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    select {
+      appearance: none;
+      padding: 0 44px 0 14px;
+      background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+      background-position:
+        calc(100% - 20px) calc(50% - 2px),
+        calc(100% - 15px) calc(50% - 2px);
+      background-size: 5px 5px, 5px 5px;
+      background-repeat: no-repeat;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: rgba(82, 103, 232, 0.78);
+      box-shadow: 0 0 0 4px rgba(82, 103, 232, 0.12);
+    }
+
+    input:invalid {
+      box-shadow: none;
+    }
+
+    .input-suffix {
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 750;
+      pointer-events: none;
+    }
+
+    .method-explainer {
+      min-height: 70px;
+      margin-top: 2px;
+      padding: 13px 14px;
+      border: 1px solid rgba(82, 103, 232, 0.11);
+      border-radius: var(--radius-md);
+      background: var(--primary-soft);
+      color: #4d5b7d;
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    .method-explainer strong {
+      color: var(--primary-strong);
+    }
+
+    .dimension-card {
+      grid-column: 1 / -1;
+      overflow: hidden;
+      padding: 13px 13px 11px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(246, 248, 251, 0.94));
+    }
+
+    .dimension-card-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .dimension-card-heading h3 {
+      margin: 0;
+      font-size: 0.86rem;
+      letter-spacing: -0.015em;
+    }
+
+    .dimension-card-heading span {
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 720;
+    }
+
+    .dimension-figure {
+      margin: 0;
+    }
+
+    .dimension-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-height: 155px;
+    }
+
+    .dimension-svg .diagram-label {
+      fill: var(--text);
+      font-size: 11px;
+      font-weight: 760;
+    }
+
+    .dimension-svg .diagram-note {
+      fill: var(--muted);
+      font-size: 9.5px;
+      font-weight: 650;
+    }
+
+    .dimension-svg .dimension-line {
+      fill: none;
+      stroke: #5d6b7d;
+      stroke-width: 1.35;
+      stroke-linecap: round;
+    }
+
+    .dimension-svg .extension-line {
+      fill: none;
+      stroke: #aeb8c5;
+      stroke-width: 1;
+      stroke-dasharray: 3 3;
+    }
+
+    .dimension-svg .wedge-shape {
+      fill: var(--stone-a);
+      stroke: var(--stone-stroke);
+      stroke-width: 1.6;
+    }
+
+    .dimension-svg .shim-shape {
+      fill: var(--shim-stone);
+      stroke: var(--shim-stroke);
+      stroke-width: 1.6;
+    }
+
+    .dimension-caption {
+      margin: 6px 2px 0;
+      color: var(--muted);
+      font-size: 0.7rem;
+      line-height: 1.42;
+    }
+
+    .shim-dimension-card {
+      margin-bottom: 1px;
+    }
+
+    .optional-section {
+      padding: 16px;
+      border: 1px solid rgba(82, 103, 232, 0.15);
+      border-radius: var(--radius-lg);
+      background: linear-gradient(145deg, rgba(248, 249, 255, 0.96), rgba(241, 244, 252, 0.9));
+    }
+
+    .optional-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .optional-copy {
+      min-width: 0;
+    }
+
+    .optional-kicker {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--primary-strong);
+      font-size: 0.68rem;
+      font-weight: 850;
+      letter-spacing: 0.075em;
+      text-transform: uppercase;
+    }
+
+    .optional-copy h3 {
+      margin: 0;
+      font-size: 0.95rem;
+      letter-spacing: -0.02em;
+    }
+
+    .optional-copy p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 0.76rem;
+      line-height: 1.45;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-flex;
+      flex: 0 0 auto;
+      width: 52px;
+      height: 30px;
+      cursor: pointer;
+    }
+
+    .switch input {
+      position: absolute;
+      width: 1px;
+      min-height: 1px;
+      margin: 0;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .switch-track {
+      position: absolute;
+      inset: 0;
+      border: 1px solid #cbd4e1;
+      border-radius: 999px;
+      background: #dfe5ed;
+      transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .switch-track::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 3px 8px rgba(30, 42, 67, 0.22);
+      transition: transform 160ms ease;
+    }
+
+    .switch input:checked + .switch-track {
+      border-color: var(--primary);
+      background: var(--primary);
+    }
+
+    .switch input:checked + .switch-track::after {
+      transform: translateX(22px);
+    }
+
+    .switch input:focus-visible + .switch-track {
+      box-shadow: 0 0 0 4px rgba(82, 103, 232, 0.16);
+    }
+
+    .shim-fields {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin-top: 15px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(82, 103, 232, 0.13);
+    }
+
+    .shim-fields[hidden] {
+      display: none;
+    }
+
+    .shim-hint {
+      margin: -2px 0 0;
+      color: var(--muted);
+      font-size: 0.72rem;
+      line-height: 1.45;
+    }
+
+    input:disabled,
+    select:disabled {
+      cursor: not-allowed;
+      opacity: 0.62;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .form-message {
+      display: none;
+      margin-top: 15px;
+      padding: 12px 13px;
+      border: 1px solid #ffd4dc;
+      border-radius: var(--radius-md);
+      background: var(--danger-soft);
+      color: var(--danger);
+      font-size: 0.83rem;
+      line-height: 1.45;
+    }
+
+    .form-message.is-visible {
+      display: block;
+    }
+
+    .control-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 43px;
+      padding: 0 15px;
+      border: 0;
+      border-radius: 13px;
+      cursor: pointer;
+      font-weight: 780;
+      transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button:active {
+      transform: translateY(0);
+    }
+
+    .button-secondary {
+      background: var(--surface-muted);
+      color: var(--text);
+      box-shadow: inset 0 0 0 1px var(--line);
+    }
+
+    .button-secondary:hover {
+      background: #edf1f6;
+    }
+
+    details {
+      margin-top: 20px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.55;
+    }
+
+    summary {
+      padding-top: 17px;
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 750;
+    }
+
+    details ul {
+      margin: 10px 0 0;
+      padding-left: 19px;
+    }
+
+    details li + li {
+      margin-top: 6px;
+    }
+
+    .visual-panel {
+      min-width: 0;
+      overflow: hidden;
+      padding: 22px;
+    }
+
+    .visual-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 17px;
+    }
+
+    .visual-title {
+      display: grid;
+      gap: 5px;
+    }
+
+    .visual-title p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .method-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      max-width: 100%;
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary-strong);
+      font-size: 0.78rem;
+      font-weight: 820;
+      white-space: nowrap;
+    }
+
+    .method-badge::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 15px;
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--surface-solid);
+    }
+
+    .metric.primary {
+      border-color: rgba(82, 103, 232, 0.2);
+      background: linear-gradient(145deg, #fafaff, var(--primary-soft));
+    }
+
+    .metric-label {
+      display: block;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 720;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .metric-value {
+      display: block;
+      margin-top: 7px;
+      overflow-wrap: anywhere;
+      font-size: clamp(1.22rem, 2.4vw, 1.72rem);
+      line-height: 1.1;
+      letter-spacing: -0.045em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .metric-note {
+      display: block;
+      min-height: 2.4em;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.7rem;
+      line-height: 1.25;
+    }
+
+    .plot-card {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 50% 48%, rgba(82, 103, 232, 0.045), transparent 42%),
+        var(--plot-bg);
+    }
+
+    .plot-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: 0.55;
+      background-image:
+        linear-gradient(rgba(103, 119, 146, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(103, 119, 146, 0.055) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    #ringSvg {
+      position: relative;
+      z-index: 1;
+      display: block;
+      width: 100%;
+      max-height: min(69vh, 760px);
+      aspect-ratio: 1;
+    }
+
+    #ringSvg .stone {
+      stroke-width: 1.2;
+      vector-effect: non-scaling-stroke;
+      transition: opacity 120ms ease, filter 120ms ease;
+    }
+
+    #ringSvg .stone:hover {
+      opacity: 0.78;
+      filter: brightness(1.05);
+    }
+
+    #ringSvg .wedge-stone {
+      fill: var(--stone-a);
+      stroke: var(--stone-stroke);
+    }
+
+    #ringSvg .shim-stone {
+      fill: var(--shim-stone);
+      stroke: var(--shim-stroke);
+    }
+
+    #ringSvg .guide {
+      fill: none;
+      stroke: #8fa0b7;
+      stroke-width: 1.15;
+      stroke-dasharray: 5 6;
+      opacity: 0.68;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #ringSvg .shim-guide {
+      stroke: var(--shim-stroke);
+      stroke-dasharray: 2 7;
+      opacity: 0.48;
+    }
+
+    #ringSvg .separator {
+      stroke: rgba(104, 70, 27, 0.78);
+      stroke-width: 0.9;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #ringSvg .gap-sector {
+      fill: rgba(181, 62, 85, 0.16);
+      stroke: var(--danger);
+      stroke-width: 1.5;
+      stroke-dasharray: 5 4;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #ringSvg .gap-boundary {
+      stroke: var(--danger);
+      stroke-width: 1.6;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #ringSvg .dimension-line {
+      stroke: #44536b;
+      stroke-width: 1.35;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #ringSvg .dimension-pill {
+      fill: rgba(255, 255, 255, 0.94);
+      stroke: rgba(68, 83, 107, 0.17);
+      stroke-width: 1;
+      vector-effect: non-scaling-stroke;
+    }
+
+    #ringSvg .dimension-text {
+      fill: #334158;
+      font-size: 15px;
+      font-weight: 800;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #ringSvg .plot-label {
+      fill: var(--danger);
+      font-size: 14px;
+      font-weight: 800;
+      text-anchor: middle;
+      paint-order: stroke;
+      stroke: var(--plot-bg);
+      stroke-width: 5px;
+      stroke-linejoin: round;
+    }
+
+    #ringSvg .outer-label {
+      fill: #5d6c81;
+      font-size: 13px;
+      font-weight: 750;
+      text-anchor: middle;
+      paint-order: stroke;
+      stroke: var(--plot-bg);
+      stroke-width: 5px;
+      stroke-linejoin: round;
+    }
+
+    .plot-note {
+      position: absolute;
+      z-index: 2;
+      right: 14px;
+      bottom: 14px;
+      display: none;
+      max-width: min(300px, calc(100% - 28px));
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.91);
+      color: var(--muted);
+      font-size: 0.72rem;
+      line-height: 1.35;
+      box-shadow: 0 8px 24px rgba(31, 48, 79, 0.08);
+      backdrop-filter: blur(8px);
+    }
+
+    .plot-note.is-visible {
+      display: block;
+    }
+
+    .diagnostics {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(240px, 0.85fr);
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .diagnostic-card {
+      min-width: 0;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      background: var(--surface-solid);
+    }
+
+    .diagnostic-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 9px;
+    }
+
+    .diagnostic-head h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      letter-spacing: -0.02em;
+    }
+
+    .fit-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 0 9px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .fit-badge.good {
+      background: var(--success-soft);
+      color: var(--success);
+    }
+
+    .fit-badge.warn {
+      background: var(--warning-soft);
+      color: var(--warning);
+    }
+
+    .fit-badge.bad {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .diagnostic-copy {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 13px;
+    }
+
+    .detail-item {
+      min-width: 0;
+      padding: 10px 11px;
+      border-radius: 12px;
+      background: var(--surface-muted);
+    }
+
+    .detail-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.67rem;
+      font-weight: 720;
+      line-height: 1.25;
+    }
+
+    .detail-item strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 0.87rem;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
+    .legend-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 0.75rem;
+      line-height: 1.35;
+    }
+
+    .legend-swatch {
+      width: 18px;
+      height: 12px;
+      flex: 0 0 auto;
+      border-radius: 4px;
+      background: var(--stone-a);
+      box-shadow: inset 0 0 0 1px var(--stone-stroke);
+    }
+
+    .legend-swatch.shim {
+      background: var(--shim-stone);
+      box-shadow: inset 0 0 0 1px var(--shim-stroke);
+    }
+
+    .legend-item[hidden] {
+      display: none;
+    }
+
+    .legend-swatch.gap {
+      border: 1px dashed var(--danger);
+      background: rgba(181, 62, 85, 0.13);
+      box-shadow: none;
+    }
+
+    .legend-swatch.guide {
+      height: 0;
+      border-top: 2px dashed #8fa0b7;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .warning-strip {
+      display: none;
+      margin-top: 12px;
+      padding: 11px 13px;
+      border: 1px solid #ffdeb0;
+      border-radius: 13px;
+      background: var(--warning-soft);
+      color: var(--warning);
+      font-size: 0.77rem;
+      line-height: 1.45;
+    }
+
+    .warning-strip.is-visible {
+      display: block;
+    }
+
+    @media (max-width: 980px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .controls-panel {
+        position: static;
+      }
+
+      .input-stack {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .field.method-field,
+      .optional-section,
+      .method-explainer,
+      .form-message,
+      .control-actions,
+      details {
+        grid-column: 1 / -1;
+      }
+
+      .shim-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .shim-field-align,
+      .shim-hint {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .app-shell {
+        width: min(100% - 18px, 1440px);
+        padding: 22px 0 30px;
+      }
+
+      .hero {
+        align-items: flex-start;
+        margin-bottom: 16px;
+      }
+
+      .hero-mark {
+        width: 66px;
+        border-radius: 21px;
+      }
+
+      .hero-mark::before {
+        inset: 12px;
+        border-width: 9px;
+      }
+
+      .hero-mark::after {
+        inset: 27px;
+      }
+
+      .panel,
+      .plot-card {
+        border-radius: 21px;
+      }
+
+      .controls-panel,
+      .visual-panel {
+        padding: 16px;
+      }
+
+      .input-stack,
+      .summary-grid,
+      .diagnostics,
+      .shim-fields {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .metric.primary {
+        grid-column: 1 / -1;
+      }
+
+      .plot-card {
+        min-height: 300px;
+      }
+
+      #ringSvg {
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 430px) {
+      .hero-mark {
+        display: none;
+      }
+
+      .visual-topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .summary-grid,
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metric.primary {
+        grid-column: auto;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <span class="eyebrow">Garden geometry</span>
+        <h1>StoneRing</h1>
+        <p>Circular Paving Calculator for wedge-shaped garden stones, with optional rectangular shim stones in a complete alternating pattern. The solver shows the resulting diameter, radial alignment, and inner-edge fit.</p>
+      </div>
+      <div class="hero-mark" aria-hidden="true"></div>
+    </header>
+
+    <div class="workspace">
+      <aside class="panel controls-panel">
+        <div class="panel-heading">
+          <h2>Stone &amp; circle inputs</h2>
+          <span class="step-chip">2-part pattern</span>
+        </div>
+
+        <form id="plannerForm" novalidate>
+          <div class="input-stack">
+            <section class="dimension-card" aria-labelledby="wedgeDiagramTitle">
+              <div class="dimension-card-heading">
+                <h3 id="wedgeDiagramTitle">Wedge stone dimensions</h3>
+                <span>Top-down plan view</span>
+              </div>
+              <figure class="dimension-figure">
+                <svg class="dimension-svg" viewBox="0 0 360 205" role="img" aria-labelledby="wedgeDiagramSvgTitle wedgeDiagramSvgDesc">
+                  <title id="wedgeDiagramSvgTitle">Wedge stone dimension guide</title>
+                  <desc id="wedgeDiagramSvgDesc">A wedge-shaped stone with arrows marking outer width, inner width, and radial depth. Its inner edge follows the desired inner-diameter wedge guide.</desc>
+                  <defs>
+                    <marker id="wedgeArrowStart" markerWidth="7" markerHeight="7" refX="1" refY="3.5" orient="auto">
+                      <path d="M7,0 L0,3.5 L7,7" fill="none" stroke="#5d6b7d" stroke-width="1.2"></path>
+                    </marker>
+                    <marker id="wedgeArrowEnd" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+                      <path d="M0,0 L7,3.5 L0,7" fill="none" stroke="#5d6b7d" stroke-width="1.2"></path>
+                    </marker>
+                  </defs>
+
+                  <path class="wedge-shape" d="M76 50 L248 50 L221 143 L103 143 Z"></path>
+
+                  <path class="extension-line" d="M76 45 V28 M248 45 V28"></path>
+                  <path class="dimension-line" d="M78 29 H246" marker-start="url(#wedgeArrowStart)" marker-end="url(#wedgeArrowEnd)"></path>
+                  <text class="diagram-label" x="162" y="19" text-anchor="middle">Outer width</text>
+                  <text class="diagram-note" x="162" y="42" text-anchor="middle">outer edge</text>
+
+                  <path class="extension-line" d="M103 148 V164 M221 148 V164"></path>
+                  <path class="dimension-line" d="M105 163 H219" marker-start="url(#wedgeArrowStart)" marker-end="url(#wedgeArrowEnd)"></path>
+                  <text class="diagram-label" x="162" y="178" text-anchor="middle">Inner width</text>
+
+                  <path class="extension-line" d="M253 50 H277 M226 143 H277"></path>
+                  <path class="dimension-line" d="M276 52 V141" marker-start="url(#wedgeArrowStart)" marker-end="url(#wedgeArrowEnd)"></path>
+                  <text class="diagram-label" x="293" y="91">Radial</text>
+                  <text class="diagram-label" x="293" y="105">depth</text>
+
+                  <path class="extension-line" d="M86 190 Q162 158 238 190"></path>
+                  <path class="extension-line" d="M103 143 V181 M221 143 V181"></path>
+                  <text class="diagram-note" x="162" y="201" text-anchor="middle">Desired inner diameter = wedge guide</text>
+                  <text class="diagram-note" x="162" y="156" text-anchor="middle">inner edge</text>
+                </svg>
+                <figcaption class="dimension-caption">Widths run along the stone edges. Radial depth runs from the inner edge toward the outer edge.</figcaption>
+              </figure>
+            </section>
+
+            <div class="field">
+              <div class="field-label-row">
+                <label for="outerWidth">Outer width of wedge stone</label>
+                <span class="unit">decimal</span>
+              </div>
+              <div class="input-wrap">
+                <input id="outerWidth" name="outerWidth" type="number" min="0.01" step="0.01" value="20" inputmode="decimal" required>
+                <span class="input-suffix">cm</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-label-row">
+                <label for="innerWidth">Inner width of wedge stone</label>
+                <span class="unit">decimal</span>
+              </div>
+              <div class="input-wrap">
+                <input id="innerWidth" name="innerWidth" type="number" min="0.01" step="0.01" value="14" inputmode="decimal" required>
+                <span class="input-suffix">cm</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-label-row">
+                <label for="stoneDepth">Depth of wedge stone</label>
+                <span class="unit">decimal</span>
+              </div>
+              <div class="input-wrap">
+                <input id="stoneDepth" name="stoneDepth" type="number" min="0.01" step="0.01" value="30" inputmode="decimal" required>
+                <span class="input-suffix">cm</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <div class="field-label-row">
+                <label for="desiredDiameter">Desired inner diameter</label>
+                <span class="unit">decimal</span>
+              </div>
+              <div class="input-wrap">
+                <input id="desiredDiameter" name="desiredDiameter" type="number" min="0.01" step="0.01" value="200" inputmode="decimal" required>
+                <span class="input-suffix">cm</span>
+              </div>
+            </div>
+
+            <section class="optional-section" aria-labelledby="shimSectionTitle">
+              <div class="optional-head">
+                <div class="optional-copy">
+                  <span class="optional-kicker">Optional pattern</span>
+                  <h3 id="shimSectionTitle">Alternate shim stones</h3>
+                  <p>Insert one rectangular shim after every wedge around the complete ring.</p>
+                </div>
+                <label class="switch" title="Enable alternating shim stones">
+                  <input id="useShims" name="useShims" type="checkbox" role="switch" aria-controls="shimFields" aria-expanded="false">
+                  <span class="switch-track" aria-hidden="true"></span>
+                  <span class="sr-only">Use alternating shim stones</span>
+                </label>
+              </div>
+
+              <div id="shimFields" class="shim-fields" hidden>
+                <section class="dimension-card shim-dimension-card" aria-labelledby="shimDiagramTitle">
+                  <div class="dimension-card-heading">
+                    <h3 id="shimDiagramTitle">Shim stone dimensions</h3>
+                    <span>Top-down plan view</span>
+                  </div>
+                  <figure class="dimension-figure">
+                    <svg class="dimension-svg" viewBox="0 0 360 176" role="img" aria-labelledby="shimDiagramSvgTitle shimDiagramSvgDesc">
+                      <title id="shimDiagramSvgTitle">Shim stone dimension guide</title>
+                      <desc id="shimDiagramSvgDesc">A rectangular shim stone with equal inner and outer widths and an arrow marking radial depth. Labels identify the outer and inner alignment edges.</desc>
+                      <defs>
+                        <marker id="shimArrowStart" markerWidth="7" markerHeight="7" refX="1" refY="3.5" orient="auto">
+                          <path d="M7,0 L0,3.5 L7,7" fill="none" stroke="#5d6b7d" stroke-width="1.2"></path>
+                        </marker>
+                        <marker id="shimArrowEnd" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+                          <path d="M0,0 L7,3.5 L0,7" fill="none" stroke="#5d6b7d" stroke-width="1.2"></path>
+                        </marker>
+                      </defs>
+
+                      <rect class="shim-shape" x="103" y="42" width="126" height="94" rx="2"></rect>
+
+                      <path class="extension-line" d="M103 37 V22 M229 37 V22"></path>
+                      <path class="dimension-line" d="M105 23 H227" marker-start="url(#shimArrowStart)" marker-end="url(#shimArrowEnd)"></path>
+                      <text class="diagram-label" x="166" y="14" text-anchor="middle">Shim width</text>
+                      <text class="diagram-note" x="166" y="35" text-anchor="middle">inner width = outer width</text>
+
+                      <path class="extension-line" d="M234 42 H263 M234 136 H263"></path>
+                      <path class="dimension-line" d="M262 44 V134" marker-start="url(#shimArrowStart)" marker-end="url(#shimArrowEnd)"></path>
+                      <text class="diagram-label" x="279" y="81">Radial</text>
+                      <text class="diagram-label" x="279" y="95">depth</text>
+
+                      <text class="diagram-note" x="92" y="48" text-anchor="end">outer edge</text>
+                      <text class="diagram-note" x="92" y="138" text-anchor="end">inner edge</text>
+                      <path class="extension-line" d="M95 44 H103 M95 134 H103"></path>
+
+                      <text class="diagram-note" x="166" y="158" text-anchor="middle">Alignment chooses which edge is flush with the wedges</text>
+                    </svg>
+                  </figure>
+                </section>
+
+                <div class="field">
+                  <div class="field-label-row">
+                    <label for="shimWidth">Shim stone width</label>
+                    <span class="unit">decimal</span>
+                  </div>
+                  <div class="input-wrap">
+                    <input id="shimWidth" name="shimWidth" type="number" min="0.01" step="0.01" value="4" inputmode="decimal">
+                    <span class="input-suffix">cm</span>
+                  </div>
+                </div>
+
+                <div class="field">
+                  <div class="field-label-row">
+                    <label for="shimDepth">Shim stone depth</label>
+                    <span class="unit">decimal</span>
+                  </div>
+                  <div class="input-wrap">
+                    <input id="shimDepth" name="shimDepth" type="number" min="0.01" step="0.01" value="30" inputmode="decimal">
+                    <span class="input-suffix">cm</span>
+                  </div>
+                </div>
+
+                <div class="field shim-field-align">
+                  <div class="field-label-row">
+                    <label for="shimAlignment">Align shim stones on</label>
+                    <span class="unit">visual edge</span>
+                  </div>
+                  <select id="shimAlignment" name="shimAlignment">
+                    <option value="outer">Outer edge</option>
+                    <option value="inner">Inner edge</option>
+                  </select>
+                </div>
+
+                <p class="shim-hint">The solver closes the pattern on the wedge-stone outer reference circle. Alignment determines whether a different shim depth is recessed or protrudes inward or outward.</p>
+              </div>
+            </section>
+
+            <div class="field method-field">
+              <div class="field-label-row">
+                <label for="solverMethod">Solver method</label>
+                <span class="unit">priority</span>
+              </div>
+              <select id="solverMethod" name="solverMethod">
+                <option value="exact">Exact</option>
+                <option value="larger">Larger Snap</option>
+                <option value="smaller">Smaller Snap</option>
+              </select>
+            </div>
+
+            <div id="methodExplainer" class="method-explainer"></div>
+            <div id="formMessage" class="form-message" role="alert" aria-live="assertive"></div>
+
+            <div class="control-actions">
+              <button id="resetButton" class="button button-secondary" type="button">Restore example</button>
+            </div>
+
+            <details>
+              <summary>Calculation assumptions</summary>
+              <ul>
+                <li>Widths are treated as lengths along their corresponding circular reference edges.</li>
+                <li>With shims enabled, one repeating unit is one wedge followed by one shim; Snap modes always use equal whole counts of both.</li>
+                <li>The repeating-unit count is solved on the wedge-stone outer reference circle from wedge outer width plus shim width.</li>
+                <li>The desired inner diameter refers to the wedge-stone inner guide. A deeper outer-aligned shim can reduce the actual clear opening.</li>
+                <li>Stone height is ignored; this is a two-dimensional plan view.</li>
+              </ul>
+            </details>
+          </div>
+        </form>
+      </aside>
+
+      <main class="panel visual-panel">
+        <div class="visual-topbar">
+          <div class="visual-title">
+            <h2>Finished circle preview</h2>
+            <p>Plan view · all measurements in centimetres</p>
+          </div>
+          <span id="methodBadge" class="method-badge">Exact</span>
+        </div>
+
+        <section class="summary-grid" aria-label="Calculation results" aria-live="polite">
+          <article class="metric primary">
+            <span id="stoneCountLabel" class="metric-label">Final wedge quantity</span>
+            <strong id="stoneCountOutput" class="metric-value">—</strong>
+            <span id="stoneCountNote" class="metric-note">—</span>
+          </article>
+          <article class="metric">
+            <span id="innerDiameterLabel" class="metric-label">Clear opening diameter</span>
+            <strong id="innerDiameterOutput" class="metric-value">—</strong>
+            <span id="diameterDeltaOutput" class="metric-note">—</span>
+          </article>
+          <article class="metric">
+            <span id="outerDiameterLabel" class="metric-label">Outside envelope diameter</span>
+            <strong id="outerDiameterOutput" class="metric-value">—</strong>
+            <span id="outerStatusOutput" class="metric-note">—</span>
+          </article>
+        </section>
+
+        <section class="plot-card" aria-label="Wedge and shim stone ring diagram">
+          <svg id="ringSvg" viewBox="-400 -400 800 800" role="img" aria-labelledby="svgTitle svgDescription">
+            <title id="svgTitle">Circular wedge and shim paving plan</title>
+            <desc id="svgDescription">A top-down diagram of the calculated circle.</desc>
+            <defs>
+              <marker id="arrowStart" markerWidth="8" markerHeight="8" refX="3.5" refY="4" orient="auto">
+                <path d="M8,0 L0,4 L8,8" fill="none" stroke="#44536b" stroke-width="1.3"></path>
+              </marker>
+              <marker id="arrowEnd" markerWidth="8" markerHeight="8" refX="4.5" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8" fill="none" stroke="#44536b" stroke-width="1.3"></path>
+              </marker>
+            </defs>
+            <g id="plotLayer"></g>
+          </svg>
+          <div id="plotNote" class="plot-note"></div>
+        </section>
+
+        <section class="diagnostics">
+          <article class="diagnostic-card">
+            <div class="diagnostic-head">
+              <h3 id="fitHeading">Inner-edge fit</h3>
+              <span id="fitBadge" class="fit-badge good">—</span>
+            </div>
+            <p id="fitText" class="diagnostic-copy">—</p>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span id="idealInnerWidthLabel">Ideal inner pitch per wedge</span>
+                <strong id="idealInnerWidthOutput">—</strong>
+              </div>
+              <div class="detail-item">
+                <span id="suppliedInnerWidthLabel">Material at inner guide</span>
+                <strong id="suppliedInnerWidthOutput">—</strong>
+              </div>
+              <div class="detail-item">
+                <span id="gapDetailLabel">Residual fit</span>
+                <strong id="gapDetailOutput">—</strong>
+              </div>
+              <div class="detail-item">
+                <span>Outer closure radius</span>
+                <strong id="desiredOuterRadiusOutput">—</strong>
+              </div>
+            </div>
+            <div id="warningStrip" class="warning-strip"></div>
+          </article>
+
+          <article class="diagnostic-card">
+            <div class="diagnostic-head">
+              <h3>Diagram key</h3>
+            </div>
+            <p id="legendCopy" class="diagnostic-copy">The outer reference edge controls the solver. Differences at the inner guide appear as gaps or overlaps.</p>
+            <div class="legend-list">
+              <div class="legend-item"><span class="legend-swatch"></span><span>Wedge stone · muted brownish-red</span></div>
+              <div id="shimLegendItem" class="legend-item" hidden><span class="legend-swatch shim"></span><span>Rectangular shim · dark eggshell beige</span></div>
+              <div class="legend-item"><span class="legend-swatch gap"></span><span>Exact-mode reference gap</span></div>
+              <div class="legend-item"><span class="legend-swatch guide"></span><span>Wedge and shim radial guides</span></div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const TAU = Math.PI * 2;
+      const SVG_NS = "http://www.w3.org/2000/svg";
+      const MAX_INDIVIDUAL_PIECES = 900;
+      const FIT_TOLERANCE_CM = 0.05;
+      const INTEGER_TOLERANCE = 1e-9;
+      const GEOMETRY_TOLERANCE = 1e-7;
+
+      const methodCopy = {
+        exact: {
+          label: "Exact",
+          base: "<strong>Inner diameter first.</strong> Keeps the requested wedge inner diameter, reports a decimal quantity, and shows the unavoidable residual gap."
+        },
+        larger: {
+          label: "Larger Snap",
+          base: "<strong>Closed pattern, rounded up.</strong> Uses the next whole repeating-unit count, so the ring grows and the wedge inner diameter becomes larger."
+        },
+        smaller: {
+          label: "Smaller Snap",
+          base: "<strong>Closed pattern, rounded down.</strong> Uses the lower whole repeating-unit count, so the ring shrinks and the wedge inner diameter becomes smaller."
+        }
+      };
+
+      const elements = {
+        form: document.getElementById("plannerForm"),
+        outerWidth: document.getElementById("outerWidth"),
+        innerWidth: document.getElementById("innerWidth"),
+        stoneDepth: document.getElementById("stoneDepth"),
+        desiredDiameter: document.getElementById("desiredDiameter"),
+        useShims: document.getElementById("useShims"),
+        shimFields: document.getElementById("shimFields"),
+        shimWidth: document.getElementById("shimWidth"),
+        shimDepth: document.getElementById("shimDepth"),
+        shimAlignment: document.getElementById("shimAlignment"),
+        solverMethod: document.getElementById("solverMethod"),
+        methodExplainer: document.getElementById("methodExplainer"),
+        formMessage: document.getElementById("formMessage"),
+        resetButton: document.getElementById("resetButton"),
+        methodBadge: document.getElementById("methodBadge"),
+        stoneCountLabel: document.getElementById("stoneCountLabel"),
+        stoneCountOutput: document.getElementById("stoneCountOutput"),
+        stoneCountNote: document.getElementById("stoneCountNote"),
+        innerDiameterLabel: document.getElementById("innerDiameterLabel"),
+        innerDiameterOutput: document.getElementById("innerDiameterOutput"),
+        diameterDeltaOutput: document.getElementById("diameterDeltaOutput"),
+        outerDiameterLabel: document.getElementById("outerDiameterLabel"),
+        outerDiameterOutput: document.getElementById("outerDiameterOutput"),
+        outerStatusOutput: document.getElementById("outerStatusOutput"),
+        fitHeading: document.getElementById("fitHeading"),
+        fitBadge: document.getElementById("fitBadge"),
+        fitText: document.getElementById("fitText"),
+        idealInnerWidthLabel: document.getElementById("idealInnerWidthLabel"),
+        idealInnerWidthOutput: document.getElementById("idealInnerWidthOutput"),
+        suppliedInnerWidthLabel: document.getElementById("suppliedInnerWidthLabel"),
+        suppliedInnerWidthOutput: document.getElementById("suppliedInnerWidthOutput"),
+        gapDetailLabel: document.getElementById("gapDetailLabel"),
+        gapDetailOutput: document.getElementById("gapDetailOutput"),
+        desiredOuterRadiusOutput: document.getElementById("desiredOuterRadiusOutput"),
+        warningStrip: document.getElementById("warningStrip"),
+        legendCopy: document.getElementById("legendCopy"),
+        shimLegendItem: document.getElementById("shimLegendItem"),
+        ringSvg: document.getElementById("ringSvg"),
+        svgDescription: document.getElementById("svgDescription"),
+        plotLayer: document.getElementById("plotLayer"),
+        plotNote: document.getElementById("plotNote")
+      };
+
+      const defaults = {
+        outerWidth: "20",
+        innerWidth: "14",
+        stoneDepth: "30",
+        desiredDiameter: "200",
+        useShims: false,
+        shimWidth: "4",
+        shimDepth: "30",
+        shimAlignment: "outer",
+        solverMethod: "exact"
+      };
+
+      function readPositiveNumber(input) {
+        const value = Number.parseFloat(input.value);
+        return Number.isFinite(value) && value > 0 ? value : null;
+      }
+
+      function formatNumber(value, maximumFractionDigits = 2, minimumFractionDigits = 0) {
+        if (!Number.isFinite(value)) return "—";
+        return new Intl.NumberFormat("en-US", {
+          maximumFractionDigits,
+          minimumFractionDigits
+        }).format(value);
+      }
+
+      function formatCm(value, digits = 2) {
+        return Number.isFinite(value) ? `${formatNumber(value, digits)} cm` : "—";
+      }
+
+      function signedCm(value, digits = 2) {
+        if (!Number.isFinite(value)) return "—";
+        const sign = value > 0 ? "+" : value < 0 ? "−" : "±";
+        return `${sign}${formatNumber(Math.abs(value), digits)} cm`;
+      }
+
+      function nearInteger(value) {
+        const rounded = Math.round(value);
+        return Math.abs(value - rounded) <= INTEGER_TOLERANCE * Math.max(1, Math.abs(value))
+          ? rounded
+          : null;
+      }
+
+      function setShimControlsState(enabled) {
+        elements.shimFields.hidden = !enabled;
+        elements.useShims.setAttribute("aria-expanded", String(enabled));
+        elements.shimWidth.disabled = !enabled;
+        elements.shimDepth.disabled = !enabled;
+        elements.shimAlignment.disabled = !enabled;
+        elements.shimLegendItem.hidden = !enabled;
+      }
+
+      function getInputs() {
+        const outerWidth = readPositiveNumber(elements.outerWidth);
+        const innerWidth = readPositiveNumber(elements.innerWidth);
+        const depth = readPositiveNumber(elements.stoneDepth);
+        const desiredInnerDiameter = readPositiveNumber(elements.desiredDiameter);
+        const shimsEnabled = elements.useShims.checked;
+        const shimWidth = shimsEnabled ? readPositiveNumber(elements.shimWidth) : 0;
+        const shimDepth = shimsEnabled ? readPositiveNumber(elements.shimDepth) : 0;
+        const shimAlignment = elements.shimAlignment.value === "inner" ? "inner" : "outer";
+        const method = ["exact", "larger", "smaller"].includes(elements.solverMethod.value)
+          ? elements.solverMethod.value
+          : "exact";
+
+        const errors = [];
+        if (outerWidth === null) errors.push("Outer width must be greater than zero.");
+        if (innerWidth === null) errors.push("Inner width must be greater than zero.");
+        if (depth === null) errors.push("Wedge depth must be greater than zero.");
+        if (desiredInnerDiameter === null) errors.push("Desired inner diameter must be greater than zero.");
+        if (shimsEnabled && shimWidth === null) errors.push("Shim width must be greater than zero.");
+        if (shimsEnabled && shimDepth === null) errors.push("Shim depth must be greater than zero.");
+
+        return {
+          valid: errors.length === 0,
+          errors,
+          outerWidth,
+          innerWidth,
+          depth,
+          desiredInnerDiameter,
+          shimsEnabled,
+          shimWidth,
+          shimDepth,
+          shimAlignment,
+          method
+        };
+      }
+
+      function solve(input) {
+        const desiredInnerRadius = input.desiredInnerDiameter / 2;
+        const desiredOuterRadius = desiredInnerRadius + input.depth;
+        const desiredOuterCircumference = TAU * desiredOuterRadius;
+        const repeatOuterWidth = input.outerWidth + (input.shimsEnabled ? input.shimWidth : 0);
+        const exactRepeatCount = desiredOuterCircumference / repeatOuterWidth;
+        const exactInteger = nearInteger(exactRepeatCount);
+
+        let finalRepeatCount;
+        let wholeRepeatsShown;
+        let referenceOuterRadius;
+        let referenceInnerRadius;
+        let outerGap = 0;
+
+        if (input.method === "exact") {
+          finalRepeatCount = exactRepeatCount;
+          wholeRepeatsShown = exactInteger === null ? Math.floor(exactRepeatCount) : exactInteger;
+          referenceOuterRadius = desiredOuterRadius;
+          referenceInnerRadius = desiredInnerRadius;
+          outerGap = exactInteger === null
+            ? desiredOuterCircumference - wholeRepeatsShown * repeatOuterWidth
+            : 0;
+        } else {
+          finalRepeatCount = exactInteger !== null
+            ? exactInteger
+            : input.method === "larger"
+              ? Math.ceil(exactRepeatCount)
+              : Math.floor(exactRepeatCount);
+          wholeRepeatsShown = finalRepeatCount;
+          referenceOuterRadius = finalRepeatCount > 0
+            ? (finalRepeatCount * repeatOuterWidth) / TAU
+            : 0;
+          referenceInnerRadius = referenceOuterRadius - input.depth;
+        }
+
+        const referenceInnerDiameter = referenceInnerRadius * 2;
+        const referenceOuterDiameter = referenceOuterRadius * 2;
+        const referenceDiameterDelta = referenceInnerDiameter - input.desiredInnerDiameter;
+        const repeatPitchAngle = referenceOuterRadius > 0
+          ? repeatOuterWidth / referenceOuterRadius
+          : NaN;
+        const wedgeOuterAngle = referenceOuterRadius > 0
+          ? input.outerWidth / referenceOuterRadius
+          : NaN;
+        const shimReferenceAngle = input.shimsEnabled && referenceOuterRadius > 0
+          ? input.shimWidth / referenceOuterRadius
+          : 0;
+
+        let shimInnerRadius = referenceInnerRadius;
+        let shimOuterRadius = referenceOuterRadius;
+        if (input.shimsEnabled) {
+          if (input.shimAlignment === "outer") {
+            shimOuterRadius = referenceOuterRadius;
+            shimInnerRadius = referenceOuterRadius - input.shimDepth;
+          } else {
+            shimInnerRadius = referenceInnerRadius;
+            shimOuterRadius = referenceInnerRadius + input.shimDepth;
+          }
+        }
+
+        const overallOuterRadius = input.shimsEnabled
+          ? Math.max(referenceOuterRadius, shimOuterRadius)
+          : referenceOuterRadius;
+        const clearInnerRadius = input.shimsEnabled
+          ? Math.min(referenceInnerRadius, shimInnerRadius)
+          : referenceInnerRadius;
+        const overallOuterDiameter = overallOuterRadius * 2;
+        const clearInnerDiameter = clearInnerRadius * 2;
+        const clearDiameterDelta = clearInnerDiameter - input.desiredInnerDiameter;
+
+        const shimReachesInnerGuide = input.shimsEnabled && (
+          input.shimAlignment === "inner" ||
+          input.shimDepth + FIT_TOLERANCE_CM >= input.depth
+        );
+        const shimInnerContribution = shimReachesInnerGuide ? input.shimWidth : 0;
+        const suppliedInnerCoverage = input.innerWidth + shimInnerContribution;
+        const idealInnerPitch = referenceInnerRadius > 0 && Number.isFinite(repeatPitchAngle)
+          ? referenceInnerRadius * repeatPitchAngle
+          : NaN;
+        const innerFitDifference = suppliedInnerCoverage - idealInnerPitch;
+        const totalStoneEquivalent = finalRepeatCount * (input.shimsEnabled ? 2 : 1);
+        const totalPiecesShown = wholeRepeatsShown * (input.shimsEnabled ? 2 : 1);
+
+        const wedgeGeometryPhysical = referenceInnerRadius > 0 && referenceOuterRadius > referenceInnerRadius;
+        const shimGeometryPhysical = !input.shimsEnabled || (
+          shimInnerRadius > 0 && shimOuterRadius > shimInnerRadius
+        );
+        const physicallyRenderable = finalRepeatCount > 0 && wedgeGeometryPhysical && shimGeometryPhysical;
+
+        return {
+          ...input,
+          desiredInnerRadius,
+          desiredOuterRadius,
+          desiredOuterCircumference,
+          repeatOuterWidth,
+          exactRepeatCount,
+          finalRepeatCount,
+          wholeRepeatsShown,
+          referenceOuterRadius,
+          referenceInnerRadius,
+          referenceInnerDiameter,
+          referenceOuterDiameter,
+          referenceDiameterDelta,
+          repeatPitchAngle,
+          wedgeOuterAngle,
+          shimReferenceAngle,
+          outerGap,
+          shimInnerRadius,
+          shimOuterRadius,
+          overallOuterRadius,
+          overallOuterDiameter,
+          clearInnerRadius,
+          clearInnerDiameter,
+          clearDiameterDelta,
+          shimReachesInnerGuide,
+          shimInnerContribution,
+          suppliedInnerCoverage,
+          idealInnerPitch,
+          innerFitDifference,
+          totalStoneEquivalent,
+          totalPiecesShown,
+          physicallyRenderable
+        };
+      }
+
+      function clearOutputs(message) {
+        [
+          "stoneCountOutput",
+          "innerDiameterOutput",
+          "outerDiameterOutput",
+          "idealInnerWidthOutput",
+          "suppliedInnerWidthOutput",
+          "gapDetailOutput",
+          "desiredOuterRadiusOutput"
+        ].forEach((key) => { elements[key].textContent = "—"; });
+        elements.stoneCountNote.textContent = "Enter valid positive dimensions.";
+        elements.diameterDeltaOutput.textContent = "—";
+        elements.outerStatusOutput.textContent = "—";
+        elements.fitBadge.textContent = "Unavailable";
+        elements.fitBadge.className = "fit-badge bad";
+        elements.fitText.textContent = "The plan cannot be calculated until all required dimensions are valid.";
+        elements.formMessage.textContent = message;
+        elements.formMessage.classList.add("is-visible");
+        elements.warningStrip.classList.remove("is-visible");
+        elements.plotLayer.replaceChildren();
+        elements.plotNote.classList.remove("is-visible");
+      }
+
+      function updateMethodCopy(method, shimsEnabled) {
+        const copy = methodCopy[method] || methodCopy.exact;
+        const patternNote = shimsEnabled
+          ? method === "exact"
+            ? " The decimal result represents wedge–shim pairs; choose a Snap mode for a physically closed alternating ring."
+            : " Every repeating unit contains one wedge and one shim, so both quantities remain equal around the ring."
+          : "";
+        elements.methodExplainer.innerHTML = copy.base + patternNote;
+        elements.methodBadge.textContent = `${copy.label} · ${shimsEnabled ? "Wedge + Shim" : "Wedges only"}`;
+      }
+
+      function describeRadialAlignment(result) {
+        if (!result.shimsEnabled) return "Wedge outer edge is the outside envelope.";
+        const delta = result.shimDepth - result.depth;
+        if (Math.abs(delta) <= FIT_TOLERANCE_CM) {
+          return `Shim and wedge depths match; both ${result.shimAlignment} edges are flush.`;
+        }
+        if (result.shimAlignment === "outer") {
+          return delta > 0
+            ? `Shim stones protrude ${formatCm(delta, 2)} inward from the wedge inner guide.`
+            : `Shim stones stop ${formatCm(Math.abs(delta), 2)} before the wedge inner guide.`;
+        }
+        return delta > 0
+          ? `Shim stones protrude ${formatCm(delta, 2)} outward beyond the wedge outer guide.`
+          : `Shim stones are recessed ${formatCm(Math.abs(delta), 2)} from the wedge outer guide.`;
+      }
+
+      function updateResults(result) {
+        const copy = methodCopy[result.method];
+        elements.formMessage.classList.remove("is-visible");
+        elements.formMessage.textContent = "";
+        elements.methodBadge.textContent = `${copy.label} · ${result.shimsEnabled ? "Wedge + Shim" : "Wedges only"}`;
+
+        if (result.shimsEnabled) {
+          elements.stoneCountLabel.textContent = "Final alternating pattern";
+          if (result.method === "exact") {
+            elements.stoneCountOutput.textContent = `${formatNumber(result.finalRepeatCount, 3, 3)} pairs`;
+            const pairWord = result.wholeRepeatsShown === 1 ? "pair" : "pairs";
+            elements.stoneCountNote.textContent = result.outerGap > 0.0001
+              ? `${formatNumber(result.finalRepeatCount, 3)} wedge + ${formatNumber(result.finalRepeatCount, 3)} shim equivalents; ${formatNumber(result.wholeRepeatsShown, 0)} complete ${pairWord} shown.`
+              : `${formatNumber(result.wholeRepeatsShown, 0)} wedges + ${formatNumber(result.wholeRepeatsShown, 0)} shims · ${formatNumber(result.totalPiecesShown, 0)} stones total.`;
+          } else {
+            elements.stoneCountOutput.textContent = `${formatNumber(result.finalRepeatCount, 0)} pairs`;
+            elements.stoneCountNote.textContent = `${formatNumber(result.finalRepeatCount, 0)} wedges + ${formatNumber(result.finalRepeatCount, 0)} shims · ${formatNumber(result.totalStoneEquivalent, 0)} stones total.`;
+          }
+        } else {
+          elements.stoneCountLabel.textContent = "Final wedge quantity";
+          if (result.method === "exact") {
+            elements.stoneCountOutput.textContent = formatNumber(result.finalRepeatCount, 3, 3);
+            const stoneWord = result.wholeRepeatsShown === 1 ? "wedge" : "wedges";
+            elements.stoneCountNote.textContent = result.outerGap > 0.0001
+              ? `${formatNumber(result.wholeRepeatsShown, 0)} complete ${stoneWord} shown; the decimal remainder becomes a gap.`
+              : `${formatNumber(result.wholeRepeatsShown, 0)} complete ${stoneWord}; no outer gap.`;
+          } else {
+            elements.stoneCountOutput.textContent = `${formatNumber(result.finalRepeatCount, 0)} wedges`;
+            elements.stoneCountNote.textContent = "Whole wedge stones with a continuous outer paving pattern.";
+          }
+        }
+
+        elements.innerDiameterLabel.textContent = result.shimsEnabled ? "Clear opening diameter" : "Effective inner diameter";
+        elements.innerDiameterOutput.textContent = formatCm(result.clearInnerDiameter, 2);
+        if (!result.physicallyRenderable) {
+          elements.diameterDeltaOutput.textContent = "The selected dimensions do not leave a physical circular opening.";
+        } else if (result.shimsEnabled && result.clearInnerRadius < result.referenceInnerRadius - FIT_TOLERANCE_CM) {
+          elements.diameterDeltaOutput.textContent = `Wedge inner guide: ${formatCm(result.referenceInnerDiameter, 2)} · shim protrusion changes clear Ø by ${signedCm(result.clearInnerDiameter - result.referenceInnerDiameter, 2)}.`;
+        } else if (result.method === "exact") {
+          elements.diameterDeltaOutput.textContent = "Matches the requested wedge inner diameter.";
+        } else {
+          const direction = result.referenceDiameterDelta > 0 ? "larger" : result.referenceDiameterDelta < 0 ? "smaller" : "unchanged";
+          elements.diameterDeltaOutput.textContent = direction === "unchanged"
+            ? "No change from the requested wedge inner diameter."
+            : `${signedCm(result.referenceDiameterDelta, 2)} · wedge inner guide is ${direction} than requested.`;
+        }
+
+        elements.outerDiameterLabel.textContent = result.shimsEnabled ? "Outside envelope diameter" : "Effective outer diameter";
+        elements.outerDiameterOutput.textContent = formatCm(result.overallOuterDiameter, 2);
+        const alignmentText = describeRadialAlignment(result);
+        if (result.method === "exact") {
+          const closureText = result.outerGap > 0.0001
+            ? `${formatCm(result.outerGap, 2)} reference-edge gap.`
+            : "Reference edge closes exactly.";
+          elements.outerStatusOutput.textContent = `${closureText} ${alignmentText}`;
+        } else {
+          elements.outerStatusOutput.textContent = `Reference edge closes with whole ${result.shimsEnabled ? "pairs" : "stones"}. ${alignmentText}`;
+        }
+
+        const unitName = result.shimsEnabled ? "pair" : "wedge";
+        elements.fitHeading.textContent = result.shimsEnabled ? "Inner-edge fit with shims" : "Inner-edge fit";
+        elements.idealInnerWidthLabel.textContent = `Ideal inner pitch per ${unitName}`;
+        elements.suppliedInnerWidthLabel.textContent = result.shimsEnabled
+          ? "Material at inner guide per pair"
+          : "Supplied inner width";
+        elements.idealInnerWidthOutput.textContent = formatCm(result.idealInnerPitch, 2);
+        elements.suppliedInnerWidthOutput.textContent = formatCm(result.suppliedInnerCoverage, 2);
+        elements.desiredOuterRadiusOutput.textContent = formatCm(result.referenceOuterRadius, 2);
+
+        if (Number.isFinite(result.innerFitDifference)) {
+          const absoluteDifference = Math.abs(result.innerFitDifference);
+          if (absoluteDifference <= FIT_TOLERANCE_CM) {
+            elements.gapDetailLabel.textContent = "Residual fit";
+            elements.gapDetailOutput.textContent = formatCm(absoluteDifference, 2);
+          } else if (result.innerFitDifference < 0) {
+            elements.gapDetailLabel.textContent = `Inner gap per ${unitName}`;
+            elements.gapDetailOutput.textContent = formatCm(absoluteDifference, 2);
+          } else {
+            elements.gapDetailLabel.textContent = `Inner overlap per ${unitName}`;
+            elements.gapDetailOutput.textContent = formatCm(absoluteDifference, 2);
+          }
+        } else {
+          elements.gapDetailLabel.textContent = "Residual fit";
+          elements.gapDetailOutput.textContent = "Not physical";
+        }
+
+        elements.legendCopy.textContent = result.shimsEnabled
+          ? "The wedge outer guide controls closure. Alternating shim stones are drawn at their selected radial alignment and depth."
+          : "The wedge outer edge controls the solver. Differences at the inner guide appear as gaps or overlaps.";
+
+        const warnings = [];
+        if (result.innerWidth > result.outerWidth) {
+          warnings.push("The wedge inner width is greater than its outer width, so it flares inward rather than forming a conventional outward-opening wedge.");
+        }
+        if (result.exactRepeatCount < 3) {
+          warnings.push(`The calculated circumference contains fewer than three ${result.shimsEnabled ? "wedge–shim pairs" : "wedges"}; the result is mathematically valid but not a practical circular ring.`);
+        }
+        if (!result.physicallyRenderable) {
+          warnings.push("This selection produces a zero or negative inner radius for at least one stone type. Increase the circle, reduce stone depth, or use Larger Snap.");
+        }
+        if (result.shimsEnabled && result.method === "exact" && result.outerGap > 0.0001) {
+          warnings.push("Exact mode preserves the requested diameter but cannot form a physically continuous alternating ring with whole stones; use Larger Snap or Smaller Snap to close the pattern.");
+        }
+        if (result.shimsEnabled && result.shimAlignment === "outer" && !result.shimReachesInnerGuide) {
+          warnings.push(`The outer-aligned shim is ${formatCm(result.depth - result.shimDepth, 2)} too shallow to reach the wedge inner guide, so it cannot reduce the gap at that edge.`);
+        }
+        if (result.referenceInnerRadius > 0 && result.innerWidth >= TAU * result.referenceInnerRadius) {
+          warnings.push("One wedge inner edge is as long as, or longer than, the entire effective inner circumference. The preview constrains this extreme geometry.");
+        }
+        if (result.shimsEnabled && result.shimInnerRadius > 0 && result.shimWidth >= TAU * result.shimInnerRadius) {
+          warnings.push("One shim width is as long as, or longer than, the circumference at its inner radial edge. The preview constrains this extreme geometry.");
+        }
+
+        if (warnings.length > 0) {
+          elements.warningStrip.textContent = warnings.join(" ");
+          elements.warningStrip.classList.add("is-visible");
+        } else {
+          elements.warningStrip.textContent = "";
+          elements.warningStrip.classList.remove("is-visible");
+        }
+
+        updateFitDiagnostic(result);
+      }
+
+      function updateFitDiagnostic(result) {
+        if (!Number.isFinite(result.innerFitDifference)) {
+          elements.fitBadge.textContent = "Not physical";
+          elements.fitBadge.className = "fit-badge bad";
+          elements.fitText.textContent = "The selected geometry does not leave a positive wedge inner radius, so an inner-edge fit cannot be calculated.";
+          return;
+        }
+
+        const unitName = result.shimsEnabled ? "alternating pair" : "wedge";
+        const difference = result.innerFitDifference;
+        const absoluteDifference = Math.abs(difference);
+        const shimContext = result.shimsEnabled
+          ? result.shimReachesInnerGuide
+            ? ` The shim contributes ${formatCm(result.shimInnerContribution, 2)} at the wedge inner guide.`
+            : " The shim does not reach the wedge inner guide, so it contributes no width there."
+          : "";
+
+        if (absoluteDifference <= FIT_TOLERANCE_CM) {
+          elements.fitBadge.textContent = "Close fit";
+          elements.fitBadge.className = "fit-badge good";
+          elements.fitText.textContent = `The available material differs from the ideal inner pitch by only ${formatCm(absoluteDifference, 2)} per ${unitName}.${shimContext}`;
+          return;
+        }
+
+        if (difference < 0) {
+          elements.fitBadge.textContent = "Inner gaps";
+          elements.fitBadge.className = "fit-badge warn";
+          elements.fitText.textContent = `The material is ${formatCm(absoluteDifference, 2)} narrower than the ideal inner pitch per ${unitName}, leaving approximately that much uncovered inner edge.${shimContext}`;
+        } else {
+          elements.fitBadge.textContent = "Inner overlap";
+          elements.fitBadge.className = "fit-badge bad";
+          elements.fitText.textContent = `The material is ${formatCm(absoluteDifference, 2)} wider than the ideal inner pitch per ${unitName}, implying approximately that much overlap or required joint adjustment.${shimContext}`;
+        }
+      }
+
+      function svgElement(tag, attributes = {}, text = "") {
+        const element = document.createElementNS(SVG_NS, tag);
+        Object.entries(attributes).forEach(([name, value]) => {
+          if (value !== undefined && value !== null) element.setAttribute(name, String(value));
+        });
+        if (text) element.textContent = text;
+        return element;
+      }
+
+      function point(radius, angle) {
+        return {
+          x: radius * Math.cos(angle),
+          y: radius * Math.sin(angle)
+        };
+      }
+
+      function polygonPath(points) {
+        return points.map((p, index) => `${index === 0 ? "M" : "L"}${p.x.toFixed(3)},${p.y.toFixed(3)}`).join(" ") + " Z";
+      }
+
+      function annularSectorPath(innerRadius, outerRadius, startAngle, endAngle) {
+        const delta = Math.max(0, endAngle - startAngle);
+        if (delta <= 0 || innerRadius <= 0 || outerRadius <= innerRadius) return "";
+        if (delta >= TAU - GEOMETRY_TOLERANCE) return fullAnnulusPath(innerRadius, outerRadius);
+        const largeArcFlag = delta > Math.PI ? 1 : 0;
+        const outerStart = point(outerRadius, startAngle);
+        const outerEnd = point(outerRadius, endAngle);
+        const innerEnd = point(innerRadius, endAngle);
+        const innerStart = point(innerRadius, startAngle);
+        return [
+          `M${outerStart.x.toFixed(3)},${outerStart.y.toFixed(3)}`,
+          `A${outerRadius.toFixed(3)},${outerRadius.toFixed(3)} 0 ${largeArcFlag} 1 ${outerEnd.x.toFixed(3)},${outerEnd.y.toFixed(3)}`,
+          `L${innerEnd.x.toFixed(3)},${innerEnd.y.toFixed(3)}`,
+          `A${innerRadius.toFixed(3)},${innerRadius.toFixed(3)} 0 ${largeArcFlag} 0 ${innerStart.x.toFixed(3)},${innerStart.y.toFixed(3)}`,
+          "Z"
+        ].join(" ");
+      }
+
+      function fullAnnulusPath(innerRadius, outerRadius) {
+        return [
+          `M${outerRadius},0`,
+          `A${outerRadius},${outerRadius} 0 1 1 ${-outerRadius},0`,
+          `A${outerRadius},${outerRadius} 0 1 1 ${outerRadius},0`,
+          "Z",
+          `M${innerRadius},0`,
+          `A${innerRadius},${innerRadius} 0 1 0 ${-innerRadius},0`,
+          `A${innerRadius},${innerRadius} 0 1 0 ${innerRadius},0`,
+          "Z"
+        ].join(" ");
+      }
+
+      function safeHalfAngle(width, radius) {
+        if (!(width > 0) || !(radius > 0)) return 0;
+        return Math.min(width / (2 * radius), Math.PI * 0.94);
+      }
+
+      function addGuideCircles(fragment, result, scale) {
+        const wedgeInner = result.referenceInnerRadius * scale;
+        const wedgeOuter = result.referenceOuterRadius * scale;
+        fragment.append(
+          svgElement("circle", { r: wedgeOuter, class: "guide" }),
+          svgElement("circle", { r: wedgeInner, class: "guide" })
+        );
+
+        if (result.shimsEnabled) {
+          if (Math.abs(result.shimOuterRadius - result.referenceOuterRadius) > FIT_TOLERANCE_CM) {
+            fragment.append(svgElement("circle", { r: result.shimOuterRadius * scale, class: "guide shim-guide" }));
+          }
+          if (Math.abs(result.shimInnerRadius - result.referenceInnerRadius) > FIT_TOLERANCE_CM) {
+            fragment.append(svgElement("circle", { r: result.shimInnerRadius * scale, class: "guide shim-guide" }));
+          }
+        }
+      }
+
+      function addGapVisualization(fragment, result, scale, gapAngle) {
+        if (result.method !== "exact" || result.outerGap <= 0.0001 || gapAngle <= GEOMETRY_TOLERANCE) return;
+
+        const innerRadius = result.clearInnerRadius * scale;
+        const outerRadius = result.overallOuterRadius * scale;
+        const gapStart = -Math.PI / 2 - gapAngle / 2;
+        const gapEnd = -Math.PI / 2 + gapAngle / 2;
+        const gapPath = annularSectorPath(innerRadius, outerRadius, gapStart, gapEnd);
+        if (gapPath) fragment.append(svgElement("path", { d: gapPath, class: "gap-sector", "fill-rule": "evenodd" }));
+
+        [gapStart, gapEnd].forEach((angle) => {
+          const innerPoint = point(innerRadius, angle);
+          const outerPoint = point(outerRadius, angle);
+          fragment.append(svgElement("line", {
+            x1: innerPoint.x,
+            y1: innerPoint.y,
+            x2: outerPoint.x,
+            y2: outerPoint.y,
+            class: "gap-boundary"
+          }));
+        });
+
+        fragment.append(svgElement("text", {
+          x: 0,
+          y: -outerRadius - 24,
+          class: "plot-label"
+        }, `Reference gap ${formatCm(result.outerGap, 2)}`));
+      }
+
+      function addDimensions(fragment, result, scale) {
+        const clearInnerSvgRadius = result.clearInnerRadius * scale;
+        const overallOuterSvgRadius = result.overallOuterRadius * scale;
+        if (clearInnerSvgRadius >= 82) {
+          const halfLine = Math.min(clearInnerSvgRadius * 0.72, 155);
+          fragment.append(svgElement("line", {
+            x1: -halfLine,
+            y1: 0,
+            x2: halfLine,
+            y2: 0,
+            class: "dimension-line",
+            "marker-start": "url(#arrowStart)",
+            "marker-end": "url(#arrowEnd)"
+          }));
+
+          const pillWidth = Math.min(235, clearInnerSvgRadius * 1.55);
+          fragment.append(svgElement("rect", {
+            x: -pillWidth / 2,
+            y: -28,
+            width: pillWidth,
+            height: 34,
+            rx: 17,
+            class: "dimension-pill"
+          }));
+          fragment.append(svgElement("text", {
+            x: 0,
+            y: -10,
+            class: "dimension-text"
+          }, `${result.shimsEnabled ? "Clear" : "Inner"} Ø ${formatNumber(result.clearInnerDiameter, 2)} cm`));
+        }
+
+        fragment.append(svgElement("text", {
+          x: 0,
+          y: overallOuterSvgRadius + 34,
+          class: "outer-label"
+        }, `${result.shimsEnabled ? "Envelope" : "Outer"} Ø ${formatNumber(result.overallOuterDiameter, 2)} cm`));
+      }
+
+      function createWedgePath(result, scale, centerAngle) {
+        const outerRadius = result.referenceOuterRadius * scale;
+        const innerRadius = result.referenceInnerRadius * scale;
+        const outerHalf = safeHalfAngle(result.outerWidth, result.referenceOuterRadius);
+        const innerHalf = safeHalfAngle(result.innerWidth, result.referenceInnerRadius);
+        return polygonPath([
+          point(outerRadius, centerAngle - outerHalf),
+          point(outerRadius, centerAngle + outerHalf),
+          point(innerRadius, centerAngle + innerHalf),
+          point(innerRadius, centerAngle - innerHalf)
+        ]);
+      }
+
+      function createShimPath(result, scale, centerAngle) {
+        const outerRadius = result.shimOuterRadius * scale;
+        const innerRadius = result.shimInnerRadius * scale;
+        const outerHalf = safeHalfAngle(result.shimWidth, result.shimOuterRadius);
+        const innerHalf = safeHalfAngle(result.shimWidth, result.shimInnerRadius);
+        return polygonPath([
+          point(outerRadius, centerAngle - outerHalf),
+          point(outerRadius, centerAngle + outerHalf),
+          point(innerRadius, centerAngle + innerHalf),
+          point(innerRadius, centerAngle - innerHalf)
+        ]);
+      }
+
+      function renderIndividualPattern(fragment, result, scale, occupiedStart, repeatCount) {
+        for (let index = 0; index < repeatCount; index += 1) {
+          const repeatStart = occupiedStart + index * result.repeatPitchAngle;
+          const wedgeCenter = repeatStart + result.wedgeOuterAngle / 2;
+          const wedge = svgElement("path", {
+            d: createWedgePath(result, scale, wedgeCenter),
+            class: "stone wedge-stone",
+            "data-wedge-index": index + 1
+          });
+          wedge.append(svgElement("title", {}, `Wedge ${index + 1}: outer ${formatCm(result.outerWidth, 2)}, inner ${formatCm(result.innerWidth, 2)}, depth ${formatCm(result.depth, 2)}`));
+          fragment.append(wedge);
+
+          if (result.shimsEnabled) {
+            const shimCenter = repeatStart + result.wedgeOuterAngle + result.shimReferenceAngle / 2;
+            const shim = svgElement("path", {
+              d: createShimPath(result, scale, shimCenter),
+              class: "stone shim-stone",
+              "data-shim-index": index + 1
+            });
+            shim.append(svgElement("title", {}, `Shim ${index + 1}: width ${formatCm(result.shimWidth, 2)}, depth ${formatCm(result.shimDepth, 2)}, ${result.shimAlignment}-edge aligned`));
+            fragment.append(shim);
+          }
+        }
+      }
+
+      function renderSimplifiedPattern(fragment, result, scale, occupiedStart, occupiedAngle) {
+        const displayRepeats = Math.min(240, Math.max(1, Math.round(occupiedAngle / TAU * 240)));
+        const displayPitch = occupiedAngle / displayRepeats;
+        const wedgeFraction = result.outerWidth / result.repeatOuterWidth;
+
+        for (let index = 0; index < displayRepeats; index += 1) {
+          const repeatStart = occupiedStart + index * displayPitch;
+          const wedgeEnd = repeatStart + displayPitch * wedgeFraction;
+          const wedgePath = annularSectorPath(
+            result.referenceInnerRadius * scale,
+            result.referenceOuterRadius * scale,
+            repeatStart,
+            wedgeEnd
+          );
+          if (wedgePath) fragment.append(svgElement("path", { d: wedgePath, class: "stone wedge-stone" }));
+
+          if (result.shimsEnabled) {
+            const shimPath = annularSectorPath(
+              result.shimInnerRadius * scale,
+              result.shimOuterRadius * scale,
+              wedgeEnd,
+              repeatStart + displayPitch
+            );
+            if (shimPath) fragment.append(svgElement("path", { d: shimPath, class: "stone shim-stone" }));
+          }
+        }
+      }
+
+      function renderPlot(result) {
+        elements.plotLayer.replaceChildren();
+        elements.plotNote.classList.remove("is-visible");
+        elements.plotNote.textContent = "";
+
+        if (!result.physicallyRenderable) {
+          const fragment = document.createDocumentFragment();
+          fragment.append(svgElement("circle", { r: 280, class: "guide" }));
+          fragment.append(svgElement("text", {
+            x: 0,
+            y: 0,
+            class: "dimension-text"
+          }, "No physical circular opening"));
+          elements.plotLayer.append(fragment);
+          elements.svgDescription.textContent = "The selected dimensions produce a zero or negative inner radius for at least one stone type.";
+          elements.ringSvg.setAttribute("aria-label", elements.svgDescription.textContent);
+          return;
+        }
+
+        const outerSvgRadius = 300;
+        const scale = outerSvgRadius / result.overallOuterRadius;
+        const repeatCount = result.method === "exact" ? result.wholeRepeatsShown : result.finalRepeatCount;
+        const occupiedAngle = Math.min(TAU, repeatCount * result.repeatPitchAngle);
+        const gapAngle = Math.max(0, TAU - occupiedAngle);
+        const occupiedStart = result.method === "exact" && gapAngle > GEOMETRY_TOLERANCE
+          ? -Math.PI / 2 + gapAngle / 2
+          : -Math.PI / 2;
+
+        const fragment = document.createDocumentFragment();
+        addGuideCircles(fragment, result, scale);
+        addGapVisualization(fragment, result, scale, gapAngle);
+
+        const pieceCount = repeatCount * (result.shimsEnabled ? 2 : 1);
+        if (pieceCount <= MAX_INDIVIDUAL_PIECES) {
+          renderIndividualPattern(fragment, result, scale, occupiedStart, repeatCount);
+        } else {
+          renderSimplifiedPattern(fragment, result, scale, occupiedStart, occupiedAngle);
+          elements.plotNote.textContent = `Preview simplified for ${formatNumber(pieceCount, 0)} stone pieces. Counts and dimensions remain exact.`;
+          elements.plotNote.classList.add("is-visible");
+        }
+
+        addDimensions(fragment, result, scale);
+        elements.plotLayer.append(fragment);
+
+        const gapDescription = result.method === "exact" && result.outerGap > 0.0001
+          ? ` with a reference-edge gap of ${formatCm(result.outerGap, 2)}`
+          : " with a closed reference edge";
+        const patternDescription = result.shimsEnabled
+          ? `${formatNumber(repeatCount, 0)} complete alternating wedge and shim pairs`
+          : `${formatNumber(repeatCount, 0)} complete wedge stones`;
+        elements.svgDescription.textContent = `${patternDescription} around a clear opening diameter of ${formatCm(result.clearInnerDiameter, 2)},${gapDescription}.`;
+        elements.ringSvg.setAttribute("aria-label", elements.svgDescription.textContent);
+      }
+
+      function update() {
+        const shimsEnabled = elements.useShims.checked;
+        setShimControlsState(shimsEnabled);
+        const input = getInputs();
+        updateMethodCopy(input.method, shimsEnabled);
+
+        if (!input.valid) {
+          clearOutputs(input.errors.join(" "));
+          return;
+        }
+
+        const result = solve(input);
+        updateResults(result);
+        renderPlot(result);
+      }
+
+      elements.form.addEventListener("input", update);
+      elements.form.addEventListener("change", update);
+      elements.resetButton.addEventListener("click", () => {
+        elements.outerWidth.value = defaults.outerWidth;
+        elements.innerWidth.value = defaults.innerWidth;
+        elements.stoneDepth.value = defaults.stoneDepth;
+        elements.desiredDiameter.value = defaults.desiredDiameter;
+        elements.useShims.checked = defaults.useShims;
+        elements.shimWidth.value = defaults.shimWidth;
+        elements.shimDepth.value = defaults.shimDepth;
+        elements.shimAlignment.value = defaults.shimAlignment;
+        elements.solverMethod.value = defaults.solverMethod;
+        update();
+      });
+
+      update();
+    })();
+  </script>
+</body>
+</html>
